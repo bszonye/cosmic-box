@@ -117,7 +117,7 @@ echo(Vcard=Vcard, Valiens=Valiens);
 Dwall = 2;
 Hfloor = 2;
 Dcut = eround(2/3*Dwall);  // cutting margin for negative spaces
-Dgap = 0.1;  // TODO: clean up gap/cut/joint code
+Dgap = 0.1;  // gap between close-fitting parts
 echo(Dwall=Dwall, Hfloor=Hfloor, Dgap=Dgap, Dcut=Dcut);
 
 // utilities
@@ -494,8 +494,8 @@ module organizer(tier=undef) {
         draw_box(72, color=Cgold)  // cosmic deck
         draw_box(29, color=Cblack)  // destiny deck
         draw_box(64, color=Cblue)  // rewards deck
-        draw_box(20, adjust=-1, color=Cyellow)  // tech deck
-        draw_box(28, color=Cred);  // hazard deck
+        draw_box(28, color=Cred)  // hazard deck
+        draw_box(20, adjust=-1, color=Cyellow);  // tech deck
     // home system caddies
     for (i=[0,1]) {
         o = [Dsystem/2 - Vinterior.x/2 + Dgap,
@@ -539,8 +539,7 @@ print_quality = Qfinal;  // or Qdraft
 *ship_caddy($fa=print_quality);
 *system_caddy($fa=print_quality);
 *card_divider($fa=print_quality);
-*token_tray(Htray1, $fa=print_quality);  // TODO
-*token_tray(Htray2, $fa=print_quality);  // TODO
+*token_tray(Htray1, $fa=print_quality);
+*token_tray(Htray2, $fa=print_quality);
 
-*organizer(tier=1);
 organizer();
