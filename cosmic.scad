@@ -26,7 +26,7 @@ Dsystem = 72;
 Hsystem = 2.3;
 Dships = 25.6;
 Hships = 24.5;
-Dgear = 21.0;  // diamater of ship landing gear
+Dgear = 21.0;  // diameter of ship landing gear
 Vships = [ceil(Dships), Nsystems*Dships + 2*Rint, ceil(Hships) + Hfloor];
 echo(Vships=Vships);
 
@@ -48,49 +48,20 @@ player_colors = [
     Cred, Corange, Cyellow, Cgreen, Cblue, Cviolet, Cwhite, Cblack,
 ];
 
-// TODO: merge this with deck_box
-module draw_box(n, adjust=0, feet=true, color=undef) {
-    nx = 3;  // wiggle room
-    d = round((n+nx) * Hcard + 2 * Dwall) + adjust;
-    vbox0 = deck_box_volume(width=d);
-    vbox = [vbox0.y, vbox0.x, vbox0.z];
-    echo(draw=n, adjust=adjust, vbox=vbox);
-    shell = [vbox.x, vbox.y];
-    well = shell - 2*[Dwall, Dwall];
-    translate([0, d/2]) colorize(color) difference() {
-        // outer shell
-        prism(shell, height=vbox.z, r=Rext);
-        // card well
-        raise(Hfloor) prism(well, height=vbox.z, r=Rint);
-        // thumb cut
-        vthumb = [Dthumb/sin(Avee), 2*Dwall, Dthumb];
-        translate([0, (Dwall-vbox.y)/2, vbox.z-vthumb.z])
-            wall_vee_cut(vthumb);
-        // front cut
-        adraw = 75;
-        hvee = vbox.z - Hfloor;  // maximum height
-        dtop = vbox.x - 4*Rext;  // maximum width
-        dxvee = hvee / tan(adraw);
-        vdraw = [dtop - 2*dxvee, 2*Dwall, hvee];
-        translate([0, (vbox.y-Dwall)/2, Hfloor])
-            wall_vee_cut(vdraw, angle=adraw);
-    }
-    // feet
-    if (feet) colorize(color) for (i=[-1,+1]) {
-        // center feet in the available space
-        xin = Dthumb/sin(Avee) + Rext/tan(Avee);
-        xout = vbox.x/2 - Rext;
-        xfoot = (xin + xout) / 2;
-        translate([i*xfoot, Rext-Dwall, vbox.z-Rext-Rint]) intersection() {
-            translate([0, -3/2*Rext]) cube(3*Rext, center=true);
-            sphere(Rext);
-        }
-    }
-    translate([0, d + Dgap]) children();
-}
+function dbwidth(n, adjust=0) =
+    let (d = round((n+3) * Hcard + 2 * Dwall) + adjust,
+         vbox = deck_box_volume(width=d))
+    vbox.x;
+Wparty = dbwidth(24);  // party deck
+Wcosmic = dbwidth(72);  // cosmic deck
+Wdestiny = dbwidth(29);  // destiny deck
+Wrewards = dbwidth(64);  // rewards deck
+Whazard = dbwidth(28);  // hazard deck
+Wtech = dbwidth(20, adjust=-1);  // tech deck
+
 module flare_box(d=Vcard_alien.x, color=undef) {
     deck_box(width=d, color=color);
-    %raise() translate([Dwall - d/2, 0])
+    %raise() translate([Dwall, 0])
         flare_decks(d-2*Dwall);
 }
 module flare_decks(d, n=Nplayers, wide=true, lean=true) {
@@ -170,21 +141,19 @@ module organizer(tier=undef) {
     %colorize("#101080", 0.25) box_frame();
     dbox = deck_box_volume().y;  // deck box width
     // alien flare storage
-    translate([Vgame.x - Valiens.x, 0] / 2) {
-        translate([0, Vgame.y - dbox] / 2)
-            flare_box(color=Cblack);
-        %translate([0, Valiens.y - Vgame.y, Valiens.z] / 2)
-            cube(Valiens, center=true);
-    }
+    translate([Vgame.x/2 - Valiens.x, Vgame.y/2 - dbox/2])
+        flare_box(color=Cblack);
+    %translate([Vgame.x - Valiens.x, Valiens.y - Vgame.y, Valiens.z] / 2)
+        cube(Valiens, center=true);
     // draw decks
     translate([dbox/2-Vgame.x/2 + Dsystem + Dgap, Vgame.y/2])
-        rotate(180)
-        draw_box(24, feet=false, color=Csilver)  // party deck
-        draw_box(72, color=Cgold)  // cosmic deck
-        draw_box(29, color=Cblack)  // destiny deck
-        draw_box(64, color=Cblue)  // rewards deck
-        draw_box(28, color=Cred)  // hazard deck
-        draw_box(20, adjust=-1, color=Cyellow);  // tech deck
+        rotate(-90)
+        draw_box(width=Wparty, feet=false, color=Csilver)  // party deck
+        draw_box(width=Wcosmic, color=Cgold)  // cosmic deck
+        draw_box(width=Wdestiny, color=Cblack)  // destiny deck
+        draw_box(width=Wrewards, color=Cblue)  // rewards deck
+        draw_box(width=Whazard, color=Cred)  // hazard deck
+        draw_box(width=Wtech, color=Cyellow);  // tech deck
     // home system caddies
     for (i=[0,1]) {
         o = [Dsystem/2 - Vgame.x/2 + Dgap,
@@ -218,12 +187,12 @@ module organizer(tier=undef) {
 // to counteract shrinkage, scale X & Y by 100.5% in slicer
 
 *flare_box($fa=Qprint);
-*draw_box(24, feet=false, $fa=Qprint);  // party deck
-*draw_box(72, $fa=Qprint);  // cosmic deck
-*draw_box(29, $fa=Qprint);  // destiny deck
-*draw_box(64, $fa=Qprint);  // rewards deck
-*draw_box(20, adjust=-1, $fa=Qprint);  // tech deck
-*draw_box(28, $fa=Qprint);  // hazard deck
+*draw_box(width=Wparty, feet=false, $fa=Qprint);  // party deck
+*draw_box(width=Wcosmic, $fa=Qprint);  // cosmic deck
+*draw_box(width=Wdestiny, $fa=Qprint);  // destiny deck
+*draw_box(width=Wrewards, $fa=Qprint);  // rewards deck
+*draw_box(width=Whazard, $fa=Qprint);  // hazard deck
+*draw_box(width=Wtech, $fa=Qprint);  // tech deck
 *ship_caddy($fa=Qprint);
 *system_caddy($fa=Qprint);
 *deck_divider($fa=Qprint);
